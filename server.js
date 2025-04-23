@@ -73,6 +73,8 @@ app.get('/callback', async (req, res) => {
     return res.send('No code received.');
   }
 
+  console.log("Code verifier global:", codeVerifierGlobal);
+
   try {
     const response = await axios.post(
       'https://open.tiktokapis.com/v2/oauth/token',
