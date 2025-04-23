@@ -7,7 +7,8 @@ const port = 9900;
 const CLIENT_KEY = 'sbawbqgxalvpnbt4eg';
 const CLIENT_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
 //const REDIRECT_URI = `http://localhost:${port}/callback`;
-const REDIRECT_URI = 'https://d88f-201-162-227-169.ngrok-free.app/callback';
+// const REDIRECT_URI = 'https://d88f-201-162-227-169.ngrok-free.app/callback';
+const REDIRECT_URI = 'https://tiktok-token.onrender.com/callback';
 
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true');
