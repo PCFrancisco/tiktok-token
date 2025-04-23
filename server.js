@@ -88,8 +88,7 @@ app.get('/callback', async (req, res) => {
       }),
       {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
       }
     );
