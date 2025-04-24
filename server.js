@@ -34,11 +34,13 @@ app.get('/callback', async (req, res) => {
       grant_type: 'authorized_code'
     });
 
+    console.log('Response from TikTok:', response.data);
+
     const { access_token, refresh_token, seller_id } = response.data.data;
 
-    console.log('✅ Access Token:', access_token);
-    console.log('🔄 Refresh Token:', refresh_token);
-    console.log('🛍️ Seller ID:', seller_id);
+    console.log('Access Token:', access_token);
+    console.log('Refresh Token:', refresh_token);
+    console.log('Seller ID:', seller_id);
 
     // Save these tokens securely (file, database, vault, etc.)
     res.send('Authorization successful. Check your terminal for tokens.');
