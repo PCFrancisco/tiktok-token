@@ -6,102 +6,72 @@ const port = 9900;
 
 const CLIENT_KEY = 'sbawbqgxalvpnbt4eg';
 const CLIENT_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
-const REDIRECT_URI = 'https://tiktok-token.onrender.com/callback';
+const APP_KEY = 'sbawbqgxalvpnbt4eg';
+const APP_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
+const REDIRECT_URI = 'https://your-deployed-url.com/callback';
 
-let codeVerifierGlobal = null;
-let codeChallengeGlobal = null;
-
-function generateRandomString(length) {
-  var result = '';
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-function generatePKCE() {
-  const codeVerifier = (codeVerifierGlobal === null) ? generateRandomString(128) : codeVerifierGlobal;
-  let codeChallenge;
-
-  if(codeChallengeGlobal === null){
-    codeChallenge = crypto
-      .createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  } else {
-    codeChallenge = codeChallengeGlobal;
-  }
-
-  return { codeVerifier, codeChallenge };
-}
-
+// Home page
 app.get('/', (req, res) => {
-  res.send(`<a href="/login">Login with TikTok</a>`);
+  const tiktokAuthUrl = `https://auth.tiktok-shops.com/oauth/authorize?app_key=${APP_KEY}&state=my_state&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  res.send(`<a href="${tiktokAuthUrl}">Connect to TikTok Shop</a>`);
 });
 
-app.get('/login', (req, res) => {
-  const { codeVerifier, codeChallenge } = generatePKCE();
-  codeVerifierGlobal = (codeVerifierGlobal === null) ? codeVerifier : codeVerifierGlobal;
-
-  const authUrl = `https://www.tiktok.com/v2/auth/authorize?` +
-    `client_key=${CLIENT_KEY}` +
-    `&response_type=code` +
-    `&scope=user.info.basic` +
-    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-    `&state=my_state` +
-    `&code_challenge=${codeChallenge}` +
-    `&code_challenge_method=S256`;
-
-  console.log('Authorization URL:', authUrl);
-  console.log('Code Verifier:', codeVerifier); // Log the code verifier for debugging
-
-  res.redirect(authUrl);
-});
-
+// Handle TikTok redirect
 app.get('/callback', async (req, res) => {
   const { code, state } = req.query;
-
-  console.log("Code received:", code);
+  console.log('Received code:', code);
 
   if (!code) {
-    return res.send('No code received.');
+    return res.status(400).send('Authorization code not found.');
   }
 
-  console.log("Code verifier global:", codeVerifierGlobal);
+  try {
+    const response = await axios.post('https://auth.tiktok-shops.com/api/token/create/', {
+      app_key: APP_KEY,
+      app_secret: APP_SECRET,
+      auth_code: code,
+      grant_type: 'authorized_code'
+    });
+
+    const { access_token, refresh_token, seller_id } = response.data.data;
+
+    console.log('✅ Access Token:', access_token);
+    console.log('🔄 Refresh Token:', refresh_token);
+    console.log('🛍️ Seller ID:', seller_id);
+
+    // Save these tokens securely (file, database, vault, etc.)
+    res.send('Authorization successful. Check your terminal for tokens.');
+  } catch (err) {
+    console.error('❌ Error exchanging code for token:', err.response?.data || err.message);
+    res.status(500).send('Failed to exchange code for token.');
+  }
+});
+
+// Token refresh route (could be used in a cron job)
+app.get('/refresh', async (req, res) => {
+  const refresh_token = 'STORED_REFRESH_TOKEN'; // replace with real one
 
   try {
-    const response = await axios.post(
-      'https://open.tiktok.com/platform/oauth/token',
-      new URLSearchParams({
-        client_key: CLIENT_KEY,
-        client_secret: CLIENT_SECRET,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: REDIRECT_URI,
-        code_verifier: codeVerifierGlobal
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-      }
-    );
+    const response = await axios.post('https://auth.tiktok-shops.com/api/token/refresh/', {
+      app_key: APP_KEY,
+      app_secret: APP_SECRET,
+      refresh_token,
+      grant_type: 'refresh_token'
+    });
 
-    const data = response.data;
-    console.log('Access Token:', data);
-    res.send(`Access Token received: <pre>${JSON.stringify(data, null, 2)}</pre>`);
-  } catch (error) {
-    console.log('Error exchanging code for token:', error);
-    console.error(error.response?.data || error.message);
-    res.send('Failed to exchange code for token.');
+    const { access_token, refresh_token: new_refresh_token } = response.data.data;
+
+    console.log('♻️ Refreshed Access Token:', access_token);
+    console.log('🔄 New Refresh Token:', new_refresh_token);
+
+    // Save new tokens
+    res.send('Token refreshed successfully.');
+  } catch (err) {
+    console.error('❌ Error refreshing token:', err.response?.data || err.message);
+    res.status(500).send('Failed to refresh token.');
   }
 });
 
 app.listen(port, () => {
-  console.log(`TikTok OAuth server running at http://localhost:${port}`);
+  console.log(`TikTok Shop OAuth server running at http://localhost:${port}`);
 });
