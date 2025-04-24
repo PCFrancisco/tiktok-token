@@ -6,14 +6,14 @@ const port = 9900;
 
 const CLIENT_KEY = 'sbawbqgxalvpnbt4eg';
 const CLIENT_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
-const APP_KEY = 'sbawbqgxalvpnbt4eg';
-const APP_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
+const APP_KEY = '6g1f3jgb7s0o2';
+const APP_SECRET = 'a126a76e84afd3976f0bf4acb7385d6075bdcfb4';
 const APP_ID = '7495669289367799813';
 const REDIRECT_URI = 'https://your-deployed-url.com/callback';
 
 // Home page
 app.get('/', (req, res) => {
-  const tiktokAuthUrl = `https://auth.tiktok-shops.com/oauth/authorize?app_key=${APP_ID}&state=my_state&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  const tiktokAuthUrl = `https://auth.tiktok-shops.com/oauth/authorize?app_key=${APP_KEY}&state=my_state&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
   res.send(`<a href="${tiktokAuthUrl}">Connect to TikTok Shop</a>`);
 });
 
