@@ -76,7 +76,7 @@ app.get('/callback', async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://open.tiktokapis.com/v2/oauth/token',
+      'https://open.tiktok.com/platform/oauth/token',
       new URLSearchParams({
         client_key: CLIENT_KEY,
         client_secret: CLIENT_SECRET,
