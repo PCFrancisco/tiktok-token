@@ -6,11 +6,10 @@ const port = 9900;
 
 const CLIENT_KEY = 'sbawbqgxalvpnbt4eg';
 const CLIENT_SECRET = 'xgUhuOorXZQsso9k0PLyS9oe6QdxHoKc';
-//const REDIRECT_URI = `http://localhost:${port}/callback`;
-// const REDIRECT_URI = 'https://d88f-201-162-227-169.ngrok-free.app/callback';
 const REDIRECT_URI = 'https://tiktok-token.onrender.com/callback';
 
 let codeVerifierGlobal = null;
+let codeChallengeGlobal = null;
 
 function generateRandomString(length) {
   var result = '';
@@ -23,15 +22,20 @@ function generateRandomString(length) {
 }
 
 function generatePKCE() {
-  const codeVerifier = generateRandomString(128);
+  const codeVerifier = (codeVerifierGlobal === null) ? generateRandomString(128) : codeVerifierGlobal;
+  let codeChallenge;
 
-  const codeChallenge = crypto
-    .createHash('sha256')
-    .update(codeVerifier)
-    .digest('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  if(codeChallengeGlobal === null){
+    codeChallenge = crypto
+      .createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } else {
+    codeChallenge = codeChallengeGlobal;
+  }
 
   return { codeVerifier, codeChallenge };
 }
@@ -42,7 +46,7 @@ app.get('/', (req, res) => {
 
 app.get('/login', (req, res) => {
   const { codeVerifier, codeChallenge } = generatePKCE();
-  codeVerifierGlobal = codeVerifier;
+  codeVerifierGlobal = (codeVerifierGlobal === null) ? codeVerifier : codeVerifierGlobal;
 
   const authUrl = `https://www.tiktok.com/v2/auth/authorize?` +
     `client_key=${CLIENT_KEY}` +
@@ -92,6 +96,7 @@ app.get('/callback', async (req, res) => {
     console.log('Access Token:', data);
     res.send(`Access Token received: <pre>${JSON.stringify(data, null, 2)}</pre>`);
   } catch (error) {
+    console.log('Error exchanging code for token:', error);
     console.error(error.response?.data || error.message);
     res.send('Failed to exchange code for token.');
   }
